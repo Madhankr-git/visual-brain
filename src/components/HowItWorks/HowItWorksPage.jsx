@@ -37,17 +37,17 @@ export function HowItWorksPage({ onBackToBrain, onNavigate, theme, toggleTheme }
               alt="Visual Brain Logo"
               className="brand-logo-img"
               onError={(e) => {
-                e.currentTarget.src = "https://ffduaazilqxyjwcbuqkw.supabase.co/storage/v1/object/public/cms-media/madhankr/madhankr-brand-logo-small.png";
+                e.currentTarget.src = "/brand-logo.png";
               }}
             />
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+          <div className="brand-text-wrap" style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
             <span className="brand-title">Visual Brain</span>
-            <span className="brand-tag">HOW IT WORKS</span>
+            <span className="brand-tag brand-version-tag">HOW IT WORKS</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div className="nav-right-actions" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {toggleTheme && (
             <button
               type="button"
@@ -56,7 +56,7 @@ export function HowItWorksPage({ onBackToBrain, onNavigate, theme, toggleTheme }
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {theme === "dark" ? <Sun size={13} /> : <Moon size={13} />}
-              <span>{theme === "dark" ? "Light" : "Dark"}</span>
+              <span className="nav-btn-text">{theme === "dark" ? "Light" : "Dark"}</span>
             </button>
           )}
 
@@ -69,7 +69,7 @@ export function HowItWorksPage({ onBackToBrain, onNavigate, theme, toggleTheme }
                 title="Read the Why Visual Brain Manifesto"
               >
                 <BookOpen size={13} />
-                <span>Why Visual Brain?</span>
+                <span className="nav-btn-text">Why Visual Brain?</span>
               </button>
 
               <button
@@ -79,7 +79,7 @@ export function HowItWorksPage({ onBackToBrain, onNavigate, theme, toggleTheme }
                 title="About the Creator"
               >
                 <Sparkles size={13} />
-                <span>About Creator</span>
+                <span className="nav-btn-text">About Creator</span>
               </button>
             </>
           )}
@@ -88,9 +88,10 @@ export function HowItWorksPage({ onBackToBrain, onNavigate, theme, toggleTheme }
             className="nav-switch-btn"
             onClick={onBackToBrain}
             style={{ padding: "6px 14px" }}
+            title="Return to Visual Brain Canvas"
           >
             <ArrowLeft size={14} />
-            <span>Back to Visual Brain</span>
+            <span className="nav-btn-text">Visual Brain</span>
           </button>
         </div>
       </header>

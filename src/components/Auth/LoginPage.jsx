@@ -76,7 +76,7 @@ export function LoginPage({ onLoginSuccess, onBackToHome, theme, toggleTheme }) 
                   alt="Visual Brain Logo"
                   className="brand-logo-img"
                   onError={(e) => {
-                    e.currentTarget.src = "https://ffduaazilqxyjwcbuqkw.supabase.co/storage/v1/object/public/cms-media/madhankr/madhankr-brand-logo-small.png";
+                    e.currentTarget.src = "/brand-logo.png";
                   }}
                 />
               </div>

@@ -1,14 +1,13 @@
 // Centralized Dynamic Routing and Link Configuration
-// Designed to support local dev, staging, and future production live domains.
+// Global Production Canonical URL
+export const GLOBAL_APP_URL = "https://visualbrain.madhankr.com/";
 
 export const APP_CONFIG = {
+  globalUrl: GLOBAL_APP_URL,
   getLiveDomain: () => {
-    if (typeof window !== "undefined") {
-      return import.meta.env.VITE_APP_DOMAIN || window.location.origin;
-    }
-    return "";
+    return (import.meta?.env?.VITE_APP_DOMAIN) || "https://visualbrain.madhankr.com";
   },
-  basePath: import.meta.env.BASE_URL || "/"
+  basePath: (import.meta?.env?.BASE_URL) || "/"
 };
 
 export const ROUTES = {

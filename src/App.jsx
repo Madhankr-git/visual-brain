@@ -19,6 +19,7 @@ import {
   parseRoute, 
   navigateTo 
 } from "./config/routes";
+import { updateRouteSeo } from "./config/seo";
 
 export function App() {
   const [images, setImages] = useState([]);
@@ -31,12 +32,12 @@ export function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [currentView, setCurrentView] = useState(initialRoute.view); // "connections" | "gallery"
 
-  // Theme State: "light" or "dark" (persisted in localStorage with prefers-color-scheme fallback)
+  // Theme State: "light" or "dark" (Light mode is the default initial stage)
   const [theme, setTheme] = useState(() => {
     try {
       const saved = localStorage.getItem("vb_theme");
       if (saved === "light" || saved === "dark") return saved;
-      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      return "light";
     } catch {
       return "light";
     }
@@ -50,6 +51,11 @@ export function App() {
       console.warn("Could not save theme preference", e);
     }
   }, [theme]);
+
+  // Synchronize route-specific canonical URL and metadata on route change
+  useEffect(() => {
+    updateRouteSeo(currentPath);
+  }, [currentPath]);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
@@ -83,7 +89,7 @@ export function App() {
     }, 3000);
   }, []);
 
-  // 1. Supabase Auth state subscription and initial verification
+  // 1. Auth state subscription and initial verification
   useEffect(() => {
     let mounted = true;
 
@@ -153,7 +159,7 @@ export function App() {
     showToast("Logged out of Admin Portal");
   };
 
-  // 3. Cloud image loading: Supabase is the single source of truth for production images
+  // 3. Visual archive image loading: Single source of truth for production images
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -161,8 +167,8 @@ export function App() {
       const cloudImages = await ImageService.getImages();
       setImages(cloudImages || []);
     } catch (err) {
-      console.error("[Visual Brain] Failed to fetch images from Supabase:", err);
-      setLoadError(err.message || "Failed to load visual archive from Supabase.");
+      console.error("[Visual Brain] Failed to fetch images:", err);
+      setLoadError(err.message || "Failed to load visual archive.");
     } finally {
       setLoading(false);
     }
@@ -246,19 +252,13 @@ export function App() {
   };
 
   const handleOpenEdit = (img) => {
-    if (!isAdmin) {
-      handleNavigate(ROUTES.LOGIN);
-      return;
-    }
+    if (!isAdmin) return;
     setEditingImage(img);
     setIsUploadOpen(true);
   };
 
   const handleOpenUpload = () => {
-    if (!isAdmin) {
-      handleNavigate(ROUTES.LOGIN);
-      return;
-    }
+    if (!isAdmin) return;
     setEditingImage(null);
     setIsUploadOpen(true);
   };
@@ -420,7 +420,7 @@ export function App() {
       {loading && (
         <div className="canvas-status-banner">
           <div className="status-spinner" />
-          <span>Connecting to Supabase Visual Brain...</span>
+          <span>Connecting to Visual Brain...</span>
         </div>
       )}
 
@@ -429,7 +429,7 @@ export function App() {
         <div className="canvas-error-card">
           <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--accent-rose)", marginBottom: "6px" }}>
             <AlertCircle size={20} />
-            <strong style={{ fontSize: "0.95rem" }}>Supabase Connection Error</strong>
+            <strong style={{ fontSize: "0.95rem" }}>Visual Brain Connection Error</strong>
           </div>
           <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.4 }}>
             {loadError}
@@ -441,12 +441,12 @@ export function App() {
         </div>
       )}
 
-      {/* Empty Cloud Library Banner (Supabase is single source of truth) */}
+      {/* Empty Visual Library Banner */}
       {!loading && !loadError && images.length === 0 && (
         <div className="canvas-empty-card">
           <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--primary-dark)", marginBottom: "6px" }}>
             <Sparkles size={20} />
-            <strong style={{ fontSize: "0.95rem" }}>Cloud Visual Brain is Empty</strong>
+            <strong style={{ fontSize: "0.95rem" }}>Visual Brain is Empty</strong>
           </div>
           <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: isAdmin ? "14px" : "0", lineHeight: 1.4 }}>
             The Cluster currently contains 0 visual records.

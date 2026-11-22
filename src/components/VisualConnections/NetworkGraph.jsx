@@ -498,9 +498,16 @@ export function NetworkGraph({
       transformRef.current.k = newZoom;
     };
 
+    const handleTouchPrevent = (e) => {
+      // Prevent browser default pull-to-refresh / scrolling during canvas gestures
+      e.preventDefault();
+    };
+
     canvas.addEventListener("wheel", handleNativeWheel, { passive: false });
+    canvas.addEventListener("touchmove", handleTouchPrevent, { passive: false });
     return () => {
       canvas.removeEventListener("wheel", handleNativeWheel);
+      canvas.removeEventListener("touchmove", handleTouchPrevent);
     };
   }, []);
 
@@ -542,6 +549,118 @@ export function NetworkGraph({
   const handleMouseUp = () => {
     draggedNodeRef.current = null;
     isDraggingRef.current = false;
+  };
+
+  // Touch event handlers for mobile and tablet responsiveness
+  const touchInfoRef = useRef({
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    lastX: 0,
+    lastY: 0,
+    initialPinchDist: null,
+    initialZoom: 1,
+    draggedNode: null,
+    isPanning: false,
+    isPinching: false
+  });
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const world = screenToWorld(touch.clientX, touch.clientY);
+      const clickedNode = getNodeAt(world.x, world.y);
+
+      touchInfoRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startTime: Date.now(),
+        lastX: touch.clientX,
+        lastY: touch.clientY,
+        initialPinchDist: null,
+        initialZoom: transformRef.current.k,
+        draggedNode: clickedNode || null,
+        isPanning: !clickedNode,
+        isPinching: false
+      };
+
+      if (clickedNode) {
+        draggedNodeRef.current = clickedNode;
+        clickedNode.vx = 0;
+        clickedNode.vy = 0;
+      }
+    } else if (e.touches.length >= 2) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      touchInfoRef.current.initialPinchDist = dist;
+      touchInfoRef.current.initialZoom = transformRef.current.k;
+      touchInfoRef.current.isPanning = false;
+      touchInfoRef.current.isPinching = true;
+      draggedNodeRef.current = null;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 1 && !touchInfoRef.current.isPinching) {
+      const touch = e.touches[0];
+      if (draggedNodeRef.current) {
+        const world = screenToWorld(touch.clientX, touch.clientY);
+        draggedNodeRef.current.x = world.x;
+        draggedNodeRef.current.y = world.y;
+        draggedNodeRef.current.vx = 0;
+        draggedNodeRef.current.vy = 0;
+      } else if (touchInfoRef.current.isPanning) {
+        const dx = touch.clientX - touchInfoRef.current.lastX;
+        const dy = touch.clientY - touchInfoRef.current.lastY;
+        transformRef.current.x += dx;
+        transformRef.current.y += dy;
+      }
+      touchInfoRef.current.lastX = touch.clientX;
+      touchInfoRef.current.lastY = touch.clientY;
+    } else if (e.touches.length >= 2 && touchInfoRef.current.initialPinchDist) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      const scale = dist / touchInfoRef.current.initialPinchDist;
+      const newZoom = Math.min(Math.max(touchInfoRef.current.initialZoom * scale, 0.3), 3.2);
+
+      const midX = (t1.clientX + t2.clientX) / 2;
+      const midY = (t1.clientY + t2.clientY) / 2;
+
+      const currentZoom = transformRef.current.k;
+      transformRef.current.x = midX - (midX - transformRef.current.x) * (newZoom / currentZoom);
+      transformRef.current.y = midY - (midY - transformRef.current.y) * (newZoom / currentZoom);
+      transformRef.current.k = newZoom;
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (e.touches.length === 0) {
+      const { startX, startY, startTime, lastX, lastY, isPinching } = touchInfoRef.current;
+      if (!isPinching) {
+        const moveDist = Math.hypot(lastX - startX, lastY - startY);
+        const elapsed = Date.now() - startTime;
+
+        // Clean tap detection on mobile/tablet: tap opens image or tag
+        if (moveDist < 14 && elapsed < 400) {
+          const world = screenToWorld(lastX, lastY);
+          const clickedNode = getNodeAt(world.x, world.y);
+          if (clickedNode) {
+            if (clickedNode.type === "image" && onSelectImage) {
+              onSelectImage(clickedNode.data);
+            } else if (clickedNode.type === "tag" && onSelectTag) {
+              onSelectTag(clickedNode.name);
+            }
+          }
+        }
+      }
+
+      draggedNodeRef.current = null;
+      touchInfoRef.current.isPanning = false;
+      touchInfoRef.current.isPinching = false;
+      touchInfoRef.current.initialPinchDist = null;
+    }
   };
 
   // Node Click: Opens image in right panel OR opens tag related images in right panel!
@@ -589,6 +708,10 @@ export function NetworkGraph({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       />
 
       {/* Floating HUD Controls */}
@@ -673,38 +796,40 @@ export function NetworkGraph({
         <div
           className="graph-hover-tooltip"
           style={{
-            left: `${Math.min(tooltipPos.x + 15, window.innerWidth - 290)}px`,
-            top: `${Math.min(tooltipPos.y + 15, window.innerHeight - 150)}px`
+            left: `${Math.max(10, Math.min(tooltipPos.x + 15, window.innerWidth - 280))}px`,
+            top: `${Math.max(10, Math.min(tooltipPos.y + 15, window.innerHeight - 280))}px`
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+          {/* Full 100% Width Image Preview */}
+          <div className="tooltip-image-container">
             <img
               src={hoveredNode.data.imageUrl}
-              alt=""
-              style={{ width: "36px", height: "36px", objectFit: "cover", border: "1px solid var(--border-subtle)" }}
+              alt={hoveredNode.data.title || "Visual Preview"}
+              className="tooltip-preview-img"
             />
-            <div>
-              <strong style={{ display: "block", fontSize: "0.82rem", color: "var(--text-main)", lineHeight: 1.2 }}>
-                {hoveredNode.data.title}
-              </strong>
-              <span style={{ fontSize: "0.68rem", color: "var(--primary-dark)", fontWeight: 700 }}>
-                {hoveredNode.data.aiModel || "AI Visual"}
-              </span>
-            </div>
           </div>
 
-          {hoveredNode.data.camera && (
-            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "4px" }}>
-              📷 {hoveredNode.data.camera} {hoveredNode.data.aperture ? `• ${hoveredNode.data.aperture}` : ""}
-            </div>
-          )}
+          <div className="tooltip-meta-content">
+            <strong className="tooltip-title">
+              {hoveredNode.data.title}
+            </strong>
+            <span className="tooltip-subtitle">
+              {hoveredNode.data.aiModel || "AI Visual"}
+            </span>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "3px" }}>
-            {(hoveredNode.data.tags || []).slice(0, 4).map((t) => (
-              <span key={t} className="card-tag" style={{ fontSize: "0.62rem", padding: "1px 4px" }}>
-                #{t}
-              </span>
-            ))}
+            {hoveredNode.data.camera && (
+              <div className="tooltip-camera-spec">
+                📷 {hoveredNode.data.camera} {hoveredNode.data.aperture ? `• ${hoveredNode.data.aperture}` : ""}
+              </div>
+            )}
+
+            <div className="tooltip-tags-wrap">
+              {(hoveredNode.data.tags || []).slice(0, 4).map((t) => (
+                <span key={t} className="card-tag tooltip-tag-chip">
+                  #{t}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       )}

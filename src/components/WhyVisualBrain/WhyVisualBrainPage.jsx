@@ -30,17 +30,17 @@ export function WhyVisualBrainPage({ onBackToBrain, onNavigate, theme, toggleThe
               alt="Visual Brain Logo"
               className="brand-logo-img"
               onError={(e) => {
-                e.currentTarget.src = "https://ffduaazilqxyjwcbuqkw.supabase.co/storage/v1/object/public/cms-media/madhankr/madhankr-brand-logo-small.png";
+                e.currentTarget.src = "/brand-logo.png";
               }}
             />
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+          <div className="brand-text-wrap" style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
             <span className="brand-title">Visual Brain</span>
-            <span className="brand-tag">PHILOSOPHY</span>
+            <span className="brand-tag brand-version-tag">PHILOSOPHY</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div className="nav-right-actions" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {toggleTheme && (
             <button
               type="button"
@@ -49,7 +49,7 @@ export function WhyVisualBrainPage({ onBackToBrain, onNavigate, theme, toggleThe
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {theme === "dark" ? <Sun size={13} /> : <Moon size={13} />}
-              <span>{theme === "dark" ? "Light" : "Dark"}</span>
+              <span className="nav-btn-text">{theme === "dark" ? "Light" : "Dark"}</span>
             </button>
           )}
 
@@ -62,7 +62,7 @@ export function WhyVisualBrainPage({ onBackToBrain, onNavigate, theme, toggleThe
                 title="See How Visual Brain Works"
               >
                 <Compass size={13} />
-                <span>How It Works</span>
+                <span className="nav-btn-text">How It Works</span>
               </button>
 
               <button 
@@ -72,7 +72,7 @@ export function WhyVisualBrainPage({ onBackToBrain, onNavigate, theme, toggleThe
                 title="About the Creator"
               >
                 <Sparkles size={13} />
-                <span>About Creator</span>
+                <span className="nav-btn-text">About Creator</span>
               </button>
             </>
           )}
@@ -81,9 +81,10 @@ export function WhyVisualBrainPage({ onBackToBrain, onNavigate, theme, toggleThe
             className="nav-switch-btn"
             onClick={onBackToBrain}
             style={{ padding: "6px 14px" }}
+            title="Return to Visual Brain Canvas"
           >
             <ArrowLeft size={14} />
-            <span>Back to Visual Brain</span>
+            <span className="nav-btn-text">Visual Brain</span>
           </button>
         </div>
       </header>

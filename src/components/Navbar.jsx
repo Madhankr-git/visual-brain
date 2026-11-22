@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   Grid,
@@ -9,7 +9,10 @@ import {
   X,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  Menu,
+  BookOpen,
+  Compass
 } from "lucide-react";
 import { ROUTES } from "../config/routes";
 
@@ -27,6 +30,35 @@ export function Navbar({
   toggleTheme
 }) {
   const [localSearch, setLocalSearch] = useState(searchTerm);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navbarRef = useRef(null);
+
+  // Close mobile burger dropdown on outside click or escape key
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (e) => {
+      if (navbarRef.current && !navbarRef.current.contains(e.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -45,12 +77,15 @@ export function Navbar({
   };
 
   return (
-    <div className="floating-navbar-container">
+    <div className="floating-navbar-container" ref={navbarRef}>
       <header className="floating-navbar-inner">
         {/* Brand */}
         <div
           className="brand"
-          onClick={() => onNavigate(isAdmin ? ROUTES.ADMIN : ROUTES.HOME)}
+          onClick={() => {
+            setIsMenuOpen(false);
+            onNavigate(isAdmin ? ROUTES.ADMIN : ROUTES.HOME);
+          }}
           title="Return to Visual Brain Canvas"
         >
           <div className="brand-icon-wrapper">
@@ -59,19 +94,19 @@ export function Navbar({
               alt="Visual Brain Logo"
               className="brand-logo-img"
               onError={(e) => {
-                e.currentTarget.src = "https://ffduaazilqxyjwcbuqkw.supabase.co/storage/v1/object/public/cms-media/madhankr/madhankr-brand-logo-small.png";
+                e.currentTarget.src = "/brand-logo.png";
               }}
             />
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+          <div className="brand-text-wrap" style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
             <span className="brand-title">Visual Brain</span>
-            <span className={isAdmin ? "admin-mode-tag" : "brand-tag"}>
-              {isAdmin ? "ADMIN MODE" : "v1.2"}
+            <span className={isAdmin ? "admin-mode-tag" : "brand-tag brand-version-tag"}>
+              {isAdmin ? "ADMIN" : "v1.2"}
             </span>
           </div>
         </div>
 
-        {/* Search Bar with Active Search Button */}
+        {/* Search Bar with Active Search Button - Always outside burger menu */}
         <form className="search-bar-wrap" onSubmit={handleSubmit}>
           <Search size={14} className="search-icon-left" />
           <input
@@ -96,81 +131,224 @@ export function Navbar({
           )}
           <button type="submit" className="search-action-btn" title="Navigate to match in Visual Brain">
             <Search size={12} />
-            <span>Find</span>
+            <span className="nav-btn-text">Find</span>
           </button>
         </form>
 
         {/* Right Navigation & Action Cluster */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* Light / Dark Mode Theme Switcher */}
-          <button
-            type="button"
-            className="ghost-btn theme-toggle-btn"
-            onClick={toggleTheme}
-            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            {theme === "dark" ? (
-              <Sun size={14} className="theme-toggle-icon" />
-            ) : (
-              <Moon size={14} className="theme-toggle-icon" />
-            )}
-            <span>{theme === "dark" ? "Light" : "Dark"}</span>
-          </button>
-
-          {/* Gallery / Visual Brain Switcher */}
+        <div className="nav-right-actions" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          {/* Gallery / Back to Visual Brain Switcher - Always outside burger menu */}
           {currentView === "connections" ? (
             <button
+              type="button"
               className="nav-switch-btn"
-              onClick={() => onNavigate(isAdmin ? ROUTES.ADMIN_GALLERY : ROUTES.GALLERY)}
+              onClick={() => {
+                setIsMenuOpen(false);
+                onNavigate(isAdmin ? ROUTES.ADMIN_GALLERY : ROUTES.GALLERY);
+              }}
               title="Switch to Archive Gallery"
             >
               <Grid size={14} />
-              <span>Go to Gallery</span>
+              <span className="nav-btn-text">Gallery</span>
             </button>
           ) : (
             <button
+              type="button"
               className="nav-switch-btn active-gallery"
-              onClick={() => onNavigate(isAdmin ? ROUTES.ADMIN : ROUTES.HOME)}
+              onClick={() => {
+                setIsMenuOpen(false);
+                onNavigate(isAdmin ? ROUTES.ADMIN : ROUTES.HOME);
+              }}
               title="Return to Visual Brain Canvas"
             >
               <Network size={14} />
-              <span>Back to Visual Brain</span>
+              <span className="nav-btn-text">Brain</span>
             </button>
           )}
 
-          {/* ADMIN-ONLY Privileges: Only visible when logged in as admin */}
-          {isAdmin && (
-            <>
-              <button
-                className="ghost-btn"
-                onClick={onResetData}
-                title="Reset to default sample archive (Admin)"
-              >
-                <RotateCcw size={13} />
-                <span>Reset Samples</span>
-              </button>
+          {/* Desktop-only Action Buttons */}
+          <div className="desktop-nav-actions">
+            {/* Light / Dark Mode Theme Switcher */}
+            <button
+              type="button"
+              className="ghost-btn theme-toggle-btn"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {theme === "dark" ? (
+                <Sun size={14} className="theme-toggle-icon" />
+              ) : (
+                <Moon size={14} className="theme-toggle-icon" />
+              )}
+              <span className="nav-btn-text">{theme === "dark" ? "Light" : "Dark"}</span>
+            </button>
 
-              <button
-                className="upload-btn"
-                onClick={onOpenUpload}
-                title="Upload and document new AI visual (Admin)"
-              >
-                <Plus size={15} />
-                <span>Upload Image</span>
-              </button>
+            {/* ADMIN-ONLY Privileges */}
+            {isAdmin && (
+              <>
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  onClick={onResetData}
+                  title="Reset to default sample archive (Admin)"
+                >
+                  <RotateCcw size={13} />
+                  <span className="nav-btn-text">Reset</span>
+                </button>
 
-              <button
-                className="ghost-btn admin-exit-btn"
-                onClick={onLogout}
-                title="Exit Admin Mode and return to Viewer role"
-              >
-                <LogOut size={13} />
-                <span>Exit Admin</span>
-              </button>
-            </>
-          )}
+                <button
+                  type="button"
+                  className="upload-btn"
+                  onClick={onOpenUpload}
+                  title="Upload and document new AI visual (Admin)"
+                >
+                  <Plus size={15} />
+                  <span className="nav-btn-text">Upload</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="ghost-btn admin-exit-btn"
+                  onClick={onLogout}
+                  title="Exit Admin Mode and return to Viewer role"
+                >
+                  <LogOut size={13} />
+                  <span className="nav-btn-text">Exit</span>
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            type="button"
+            className={`mobile-burger-btn ${isMenuOpen ? "active" : ""}`}
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            title={isMenuOpen ? "Close menu" : "Open mobile menu"}
+            aria-label={isMenuOpen ? "Close menu" : "Open mobile menu"}
+          >
+            {isMenuOpen ? <X size={16} /> : <Menu size={16} />}
+          </button>
         </div>
+
+        {/* Mobile Burger Menu Dropdown */}
+        {isMenuOpen && (
+          <div className="mobile-burger-dropdown">
+            <div className="burger-menu-header">
+              <span className="burger-menu-tag">MENU & ACTIONS</span>
+              <button 
+                type="button" 
+                className="burger-close-icon"
+                onClick={() => setIsMenuOpen(false)}
+                title="Close menu"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Quick Theme Switch Row */}
+            <div 
+              className="burger-theme-row" 
+              onClick={() => {
+                if (toggleTheme) toggleTheme();
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {theme === "dark" ? <Sun size={14} color="var(--primary)" /> : <Moon size={14} color="var(--primary-dark)" />}
+                <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>
+                  {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                </span>
+              </div>
+              <span className="brand-tag" style={{ fontSize: "0.62rem", padding: "1px 6px" }}>
+                {theme === "dark" ? "ACTIVE DARK" : "ACTIVE LIGHT"}
+              </span>
+            </div>
+
+            {/* Admin Controls (if authenticated) */}
+            {isAdmin && (
+              <div className="burger-section">
+                <span className="burger-section-label">ADMIN CONTROLS</span>
+                <button
+                  type="button"
+                  className="upload-btn"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenUpload();
+                  }}
+                  style={{ width: "100%", justifyContent: "flex-start", padding: "7px 10px" }}
+                >
+                  <Plus size={14} />
+                  <span>Upload Image</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onResetData();
+                  }}
+                  style={{ width: "100%", justifyContent: "flex-start", padding: "7px 10px" }}
+                >
+                  <RotateCcw size={13} />
+                  <span>Reset Samples</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="ghost-btn admin-exit-btn"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onLogout();
+                  }}
+                  style={{ width: "100%", justifyContent: "flex-start", padding: "7px 10px" }}
+                >
+                  <LogOut size={13} />
+                  <span>Exit Admin Mode</span>
+                </button>
+              </div>
+            )}
+
+            {/* Documentation & Philosophy Links */}
+            <div className="burger-section">
+              <span className="burger-section-label">DOCUMENTATION</span>
+              
+              <div
+                className="burger-menu-link"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onNavigate(ROUTES.WHY_VISUAL_BRAIN);
+                }}
+              >
+                <BookOpen size={13} color="var(--primary-dark)" />
+                <span>Why Visual Brain?</span>
+              </div>
+
+              <div
+                className="burger-menu-link"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onNavigate(ROUTES.HOW_IT_WORKS);
+                }}
+              >
+                <Compass size={13} color="var(--primary-dark)" />
+                <span>How It Works</span>
+              </div>
+
+              <div
+                className="burger-menu-link"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onNavigate(ROUTES.ABOUT_CREATOR);
+                }}
+              >
+                <Sparkles size={13} color="var(--primary-dark)" />
+                <span>About the Creator</span>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
     </div>
   );
