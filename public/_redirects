@@ -1,1 +1,3 @@
+https://visualbrain.netlify.app/* https://visualbrain.madhankr.com/:splat 301!
+http://visualbrain.netlify.app/* https://visualbrain.madhankr.com/:splat 301!
 /* /index.html 200

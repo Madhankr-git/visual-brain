@@ -2,6 +2,11 @@
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      if (window.location.hostname === "visualbrain.netlify.app") {
+        window.location.replace("https://visualbrain.madhankr.com" + window.location.pathname + window.location.search + window.location.hash);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Visual Brain — Curated Visual Knowledge Graph for AI-Generated Imagery</title>
     <meta name="description" content="Visual Brain is a curated visual knowledge graph for understanding AI-generated imagery and creative decisions. Explore connections between prompts, styles, and photographic techniques." />
