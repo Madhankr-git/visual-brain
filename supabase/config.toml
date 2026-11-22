@@ -1,0 +1,30 @@
+# Supabase CLI Configuration for Visual Brain
+# Documentation: https://supabase.com/docs/guides/cli/config
+
+project_id = "visual-brain"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[auth]
+enabled = true
+port = 54324
+# Security constraint: Public self-registration is strictly disabled.
+# Only existing administrator(s) configured in public.admin_users can sign in.
+enable_signup = false
+email_double_confirm = false
+enable_anonymous_sign_ins = false
+
+[storage]
+enabled = true
+port = 54323
+file_size_limit = "10MiB"
